@@ -37,11 +37,14 @@
 
 <h3 id="DevelopEnv">安装和运行方式</h3>
 * 安装库
+
 ```Python
     # 项目根目录下,打开命令行
     pip install -r requirements.txt
 ```
+
 * 启动
+
 ```Python
     # 项目根目录下,启动爬虫
     scrapy crawl AlipaySpider -a username="你的用户名" -a password="你的密码"
