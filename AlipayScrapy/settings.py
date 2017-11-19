@@ -1,16 +1,9 @@
 # -*- coding: utf-8 -*-
 
-# Scrapy settings for AlipayScrapy project
-#
-# For simplicity, this file contains only settings considered important or
-# commonly used. You can find more settings consulting the documentation:
-#
-#     http://doc.scrapy.org/en/latest/topics/settings.html
-#     http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
-#     http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
-
+# Scrapy的名字
 BOT_NAME = 'AlipayScrapy'
 
+# 爬虫模块
 SPIDER_MODULES = ['AlipayScrapy.spiders']
 NEWSPIDER_MODULE = 'AlipayScrapy.spiders'
 
@@ -29,12 +22,11 @@ LOG_FILE = "Alipay.log"
 LOG_LEVEL = "DEBUG"
 LOG_ENCODING = "UTF-8"
 
-# Crawl responsibly by identifying yourself (and your website) on the user-agent
-# USER_AGENT = 'AlipayScrapy (+http://www.yourdomain.com)'
+# Scrapy User-agent(用了selenium之后其实可以去掉的)
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) ' \
              'Chrome/55.0.2883.87 UBrowser/6.2.3637.220 Safari/537.36'
 
-# Obey robots.txt rules
+# 遵循robots.txt的规则(至于什么事robots.txt自行百度)
 # ROBOTSTXT_OBEY = True
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
@@ -48,28 +40,20 @@ USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, li
 # CONCURRENT_REQUESTS_PER_DOMAIN = 16
 # CONCURRENT_REQUESTS_PER_IP = 16
 
-# Disable cookies (enabled by default)
+# Cookies的开启(默认也是True)
 COOKIES_ENABLED = True
 COOKIES_DEBUG = True
 
-# Disable Telnet Console (enabled by default)
+# 关闭telnet 命令行
 # TELNETCONSOLE_ENABLED = False
 
-# Override the default request headers:
-# DEFAULT_REQUEST_HEADERS = {
-#   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-#   'Accept-Language': 'en',
-# }
-
-# Enable or disable spider middlewares
-# See http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
+# 启动或关闭中间件
 SPIDER_MIDDLEWARES = {
     # 'AlipayScrapy.middlewares.AlipayscrapySpiderMiddleware': 543,
     'scrapy.contrib.spidermiddleware.referer.RefererMiddleware': True
 }
 
-# Enable or disable downloader middlewares
-# See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
+# 启动或关闭下载中间件
 # DOWNLOADER_MIDDLEWARES = {
 #    'AlipayScrapy.middlewares.MyCustomDownloaderMiddleware': 543,
 # }
@@ -80,8 +64,7 @@ SPIDER_MIDDLEWARES = {
 #    'scrapy.extensions.telnet.TelnetConsole': None,
 # }
 
-# Configure item pipelines
-# See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
+# 配置管道
 ITEM_PIPELINES = {
     'AlipayScrapy.pipelines.AlipayScrapyPipeline': 300
 }

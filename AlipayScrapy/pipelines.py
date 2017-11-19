@@ -36,10 +36,10 @@ class AlipayScrapyPipeline(object):
         # self.collection = self.db[self.collection_name]
 
     def process_item(self, item, spider):
-        if len(item) == 3:
+        if len(item) == 6:
             collection = self.db['c_user_info']
             collection.insert(dict(item))
-        elif len(item) != 3:
+        elif len(item) != 6:
             collection = self.db[self.collection_name]
             collection.insert(dict(item))
         return item
