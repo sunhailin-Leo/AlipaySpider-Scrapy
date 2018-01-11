@@ -1,5 +1,6 @@
+Pillow==5.0.0
 Scrapy==1.4.0
-selenium==3.6.0
+selenium==3.8.1
 requests==2.18.4
-pymongo==3.5.1
+pymongo==3.6.0
 python_dateutil==2.6.1

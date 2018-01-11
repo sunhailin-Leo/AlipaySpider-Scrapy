@@ -15,8 +15,9 @@ from random import choice
 # 第三方库
 import scrapy
 from selenium import webdriver
-from urllib.parse import quote_plus
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
 
 # 项目内部库
 from AlipayScrapy.items import AlipayBillItem
@@ -45,7 +46,7 @@ class AlipaySpider(scrapy.Spider):
     # Scrapy启动的名字
     name = "AlipaySpider"
 
-    def __init__(self, username, password, option=None, *args, **kwargs):
+    def __init__(self, username, password, option=None, *args):
         # 初始化浏览器
         self._browser = None
 
@@ -85,18 +86,18 @@ class AlipaySpider(scrapy.Spider):
         self.end_date, self.begin_date = TimeUtil.get_front_or_after_month(month=-3)
 
         # super方法
-        super(AlipaySpider, self).__init__(*args, **kwargs)
+        super(AlipaySpider, self).__init__(*args)
 
     '''
         工具方法(下方)
     '''
-    # 初始化Chorme
+    # 初始化Chrome
     def _load_chrome(self):
         dcap = dict(DesiredCapabilities.PHANTOMJS)
         dcap["phantomjs.page.settings.resourceTimeout"] = 15
         dcap["phantomjs.page.settings.loadImages"] = False
         dcap["phantomjs.page.settings.userAgent"] = choice(ua_list)
-        self._browser = webdriver.Chrome(executable_path="C:\\Python34\\Scripts\\chromedriver.exe")
+        self._browser = webdriver.Chrome(executable_path="./AlipayScrapy/conf/chromedriver2-35.exe")
 
     # 减慢账号密码的输入速度
     @staticmethod
@@ -251,8 +252,26 @@ class AlipaySpider(scrapy.Spider):
         # 日志输出
         logger.info("当前页面: " + self._browser.current_url)
 
+        builder = ActionChains(self._browser)
+        builder.send_keys(Keys.F12)
+
+        # 点击三个新增的显示金额的按钮
+        show_account_button = self._browser.find_element_by_xpath('//*[@id="showAccountAmountText"]')
+        show_account_button.click()
+        time.sleep(random.uniform(0.3, 0.9))
+        show_yuerbao_button = self._browser.find_element_by_xpath('//*[@id="showYuebaoAmountText"]')
+        show_yuerbao_button.click()
+        time.sleep(random.uniform(0.5, 1.2))
+        show_huabei_button = self._browser.find_element_by_xpath('//*[@id="showHuabeiAmountText"]')
+        show_huabei_button.click()
+
+        # 隐式等待
+        self._browser.implicitly_wait(3)
+
         # 个人页面元素选择器对象
-        page_sel = scrapy.Selector(response)
+        # page_sel = scrapy.Selector(response)
+        print("Response: %s" % response)
+        page_sel = scrapy.Selector(text=self._browser.page_source)
 
         # 花呗
         user_item = AlipayUserItem()
@@ -269,64 +288,72 @@ class AlipaySpider(scrapy.Spider):
         yield user_item
 
         # 智能等待 --- 1
-        time.sleep(random.uniform(0.2, 0.9))
+        time.sleep(random.uniform(0.3, 0.9))
 
         # 获取完后跳转到账单页面
         self._browser.find_element_by_xpath('//ul[@class="global-nav"]/li[@class="global-nav-item "]/a').click()
 
-        # 账单页面设置
-        # 下拉框a标签点击事件触发
-        self._browser.find_element_by_xpath('//div[@id="J-datetime-select"]/a[1]').click()
+        try:
+            # 账单页面设置
+            # 下拉框a标签点击事件触发
+            self._browser.find_element_by_xpath('//div[@id="J-datetime-select"]/a[1]').click()
 
-        # 选择下拉框的选项
-        self._browser.find_element_by_xpath('//ul[@class="ui-select-content"]/li[@data-value="threeMonths"]').click()
-        '''
-        self._browser.find_element_by_xpath('//ul[@class="ui-select-content"]/li[@data-value="customDate"]').click()
+            # 选择下拉框的选项
+            self._browser.find_element_by_xpath('//ul[@class="ui-select-content"]/li[@data-value="threeMonths"]').\
+                click()
 
-        # 起始日期和最终日期的初始化
-        begin_date_tag = "beginDate"
-        end_date_tag = "endDate"
+            '''
+            self._browser.find_element_by_xpath('//ul[@class="ui-select-content"]/li[@data-value="customDate"]').click()
+    
+            # 起始日期和最终日期的初始化
+            begin_date_tag = "beginDate"
+            end_date_tag = "endDate"
+    
+            # 设置起始日期
+            remove_start_time_read_only = "document.getElementById('" + begin_date_tag + "')." \
+                                                                                         "removeAttribute('readonly')"
+            self._browser.execute_script(remove_start_time_read_only)
+            ele_begin = self._browser.find_element_by_id(begin_date_tag)
+            ele_begin.clear()
+            self._slow_input(ele_begin, self.begin_date)
+    
+            # 智能等待 --- 1
+            time.sleep(random.uniform(1, 2))
+    
+            # 设置结束日期
+            remove_end_time_read_only = "document.getElementById('" + end_date_tag + "').removeAttribute('readonly')"
+            self._browser.execute_script(remove_end_time_read_only)
+            ele_end = self._browser.find_element_by_id(end_date_tag)
+            ele_end.clear()
+            self._slow_input(ele_end, self.end_date)
+            '''
 
-        # 设置起始日期
-        remove_start_time_read_only = "document.getElementById('" + begin_date_tag + "')." \
-                                                                                     "removeAttribute('readonly')"
-        self._browser.execute_script(remove_start_time_read_only)
-        ele_begin = self._browser.find_element_by_id(begin_date_tag)
-        ele_begin.clear()
-        self._slow_input(ele_begin, self.begin_date)
+            # 智能等待 --- 2
+            time.sleep(random.uniform(0.5, 0.9))
 
-        # 智能等待 --- 1
-        time.sleep(random.uniform(1, 2))
+            # 选择交易分类
+            self._browser.find_element_by_xpath('//div[@id="J-category-select"]/a[1]').click()
 
-        # 设置结束日期
-        remove_end_time_read_only = "document.getElementById('" + end_date_tag + "').removeAttribute('readonly')"
-        self._browser.execute_script(remove_end_time_read_only)
-        ele_end = self._browser.find_element_by_id(end_date_tag)
-        ele_end.clear()
-        self._slow_input(ele_end, self.end_date)
-        '''
+            # 选择交易分类项
+            self._bill_option_control()
 
-        # 智能等待 --- 2
-        time.sleep(random.uniform(0.5, 0.9))
+            # 智能等待 --- 3
+            time.sleep(random.uniform(1, 2))
 
-        # 选择交易分类
-        self._browser.find_element_by_xpath('//div[@id="J-category-select"]/a[1]').click()
+            # 按钮(交易记录点击搜索)
+            self._browser.find_element_by_id("J-set-query-form").click()
+            logger.info("跳转到自定义时间页面....")
+            logger.info(self._browser.current_url)
 
-        # 选择交易分类项
-        self._bill_option_control()
-
-        # 智能等待 --- 3
-        time.sleep(random.uniform(1, 2))
-
-        # 按钮(交易记录点击搜索)
-        self._browser.find_element_by_id("J-set-query-form").click()
-        logger.info("跳转到自定义时间页面....")
-        logger.info(self._browser.current_url)
-
-        # 跳转
-        yield scrapy.Request(url=self._browser.current_url,
-                             callback=self.parse,
-                             cookies=self.cookie)
+            # 跳转
+            yield scrapy.Request(url=self._browser.current_url,
+                                 callback=self.parse,
+                                 cookies=self.cookie)
+        except Exception as err:
+            print(err)
+            print(self._browser.current_url)
+            self._browser.close()
+            # https://consumeprod.alipay.com/record/checkSecurity.htm?securityId=web%7Cconsumeprod_record_list%7Ce73b7d83-9831-4c3b-b2f9-56e03b00a0acGZ00&consumeVersion=advanced
 
     # 解析账单页面
     def parse(self, response):
