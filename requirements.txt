@@ -1,5 +1,5 @@
 Pillow==5.0.0
-Scrapy==1.4.0
+Scrapy
 selenium==3.8.1
 requests==2.18.4
 pymongo==3.6.0
