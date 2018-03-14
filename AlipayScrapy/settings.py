@@ -50,7 +50,7 @@ COOKIES_DEBUG = True
 # 启动或关闭中间件
 SPIDER_MIDDLEWARES = {
     # 'AlipayScrapy.middlewares.AlipayscrapySpiderMiddleware': 543,
-    'scrapy.contrib.spidermiddleware.referer.RefererMiddleware': True
+    'scrapy.spidermiddlewares.referer.RefererMiddleware': True
 }
 
 # 启动或关闭下载中间件
