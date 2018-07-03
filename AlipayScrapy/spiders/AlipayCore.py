@@ -365,8 +365,10 @@ class AlipaySpider(scrapy.Spider):
     def parse(self, response):
         if "checkSecurity" in self._browser.current_url:
             logger.info("出现验证页面: " + self._browser.current_url)
-            # logger.info("需要验证,暂时无解决办法,跳出爬虫")
-            wait_seconds = 60
+
+            # 这里即使设置等待时间扫了安全验证的二维码
+            # 然而,再次遇到二维码之后,扫码之后会跳到登录界面
+            wait_seconds = 30
             logger.info("等待{}秒".format(wait_seconds))
             time.sleep(wait_seconds)
             logger.info("当前页面: " + self._browser.current_url)
