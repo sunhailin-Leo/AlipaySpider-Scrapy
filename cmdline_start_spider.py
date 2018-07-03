@@ -18,8 +18,8 @@ def start_spider():
     # 获取main文件的父目录，os.path.abspath(__file__) 为__file__文件目录
     sys.path.append(os.path.dirname(os.path.abspath(__file__)))
     execute(["scrapy", "crawl", "AlipaySpider",
-             "-a", "username={}".format("379978424@qq.com"),
-             "-a", "password={}".format("379978424.qq.com")])
+             "-a", "username={}".format("你的账号"),
+             "-a", "password={}".format("你的密码")])
     # execute(["scrapy", "crawl", "AlipayQR"])
 
 
