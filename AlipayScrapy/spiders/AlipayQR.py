@@ -16,6 +16,7 @@ from threading import Thread
 # 第三方库
 import scrapy
 from PIL import Image
+import win_unicode_console
 from selenium import webdriver
 
 # 项目内部库
@@ -23,6 +24,9 @@ from AlipayScrapy.items import AlipayBillItem
 from AlipayScrapy.items import AlipayUserItem
 from AlipayScrapy.utils.time_util import TimeUtil
 from AlipayScrapy.utils.common_utils import *
+
+# 解决Win10 console框报错问题
+win_unicode_console.enable()
 
 # USERAGENT-LIST
 ua_list = [
@@ -316,6 +320,9 @@ class AlipayQRCodeSpider(scrapy.Spider):
         if "checkSecurity" in self._browser.current_url:
             logger.info("当前页面: " + self._browser.current_url)
             logger.info("需要验证,暂时无解决办法,跳出爬虫")
+            logger.info("等待10秒!...")
+            self._browser.implicitly_wait(10)
+            self._browser.close()
         else:
             # 判断是否存在下一页的标签
             is_next_page = self._is_element_exist()

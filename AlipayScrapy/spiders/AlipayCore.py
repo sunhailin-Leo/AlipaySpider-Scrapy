@@ -13,6 +13,7 @@ from random import choice
 
 # 第三方库
 import scrapy
+import win_unicode_console
 from selenium import webdriver
 from selenium.webdriver.support.wait import WebDriverWait
 
@@ -21,6 +22,9 @@ from AlipayScrapy.items import AlipayBillItem
 from AlipayScrapy.items import AlipayUserItem
 from AlipayScrapy.utils.time_util import TimeUtil
 from AlipayScrapy.utils.common_utils import *
+
+# 解决Win10 console框报错问题
+win_unicode_console.enable()
 
 # USERAGENT-LIST
 ua_list = [
@@ -289,6 +293,7 @@ class AlipaySpider(scrapy.Spider):
             # logger.info("需要验证,暂时无解决办法,跳出爬虫")
             is_change_page = \
                 WebDriverWait(self._browser, 10, 2).until_not(lambda x: "checkSecurity" not in x.current_url)
+            logger.debug("变量is_change_page的值为: {}".format(is_change_page))
             if is_change_page:
                 try:
                     # 下拉框a标签点击事件触发
@@ -347,75 +352,28 @@ class AlipaySpider(scrapy.Spider):
                                          callback=self.parse,
                                          cookies=self.cookie)
                 except Exception as err:
-                    print(err)
-                    print(self._browser.current_url)
+                    logger.error(err)
+                    logger.debug(self._browser.current_url)
                     self._browser.close()
-        try:
-            # 账单页面设置
-            # 下拉框a标签点击事件触发
-            self._browser.find_element_by_xpath('//div[@id="J-datetime-select"]/a[1]').click()
-
-            # 选择下拉框的选项
-            self._browser.find_element_by_xpath('//ul[@class="ui-select-content"]/li[@data-value="threeMonths"]'). \
-                click()
-
-            '''
-            self._browser.find_element_by_xpath('//ul[@class="ui-select-content"]/li[@data-value="customDate"]').click()
-
-            # 起始日期和最终日期的初始化
-            begin_date_tag = "beginDate"
-            end_date_tag = "endDate"
-
-            # 设置起始日期
-            remove_start_time_read_only = "document.getElementById('" + begin_date_tag + "')." \
-                                                                                         "removeAttribute('readonly')"
-            self._browser.execute_script(remove_start_time_read_only)
-            ele_begin = self._browser.find_element_by_id(begin_date_tag)
-            ele_begin.clear()
-            self._slow_input(ele_begin, self.begin_date)
-
-            # 智能等待 --- 1
-            time.sleep(random.uniform(1, 2))
-
-            # 设置结束日期
-            remove_end_time_read_only = "document.getElementById('" + end_date_tag + "').removeAttribute('readonly')"
-            self._browser.execute_script(remove_end_time_read_only)
-            ele_end = self._browser.find_element_by_id(end_date_tag)
-            ele_end.clear()
-            self._slow_input(ele_end, self.end_date)
-            '''
-
-            # 智能等待 --- 2
-            time.sleep(random.uniform(0.5, 0.9))
-
-            # 选择交易分类
-            self._browser.find_element_by_xpath('//div[@id="J-category-select"]/a[1]').click()
-
-            # 选择交易分类项
-            self._bill_option_control()
-
-            # 智能等待 --- 3
-            time.sleep(random.uniform(1, 2))
-
-            # 按钮(交易记录点击搜索)
-            self._browser.find_element_by_id("J-set-query-form").click()
-            logger.info("跳转到自定义时间页面....")
-            logger.info(self._browser.current_url)
-
-            # 跳转
-            yield scrapy.Request(url=self._browser.current_url,
-                                 callback=self.parse,
-                                 cookies=self.cookie)
-        except Exception as err:
-            print(err)
-            print(self._browser.current_url)
-            self._browser.close()
+            else:
+                # 跳转
+                yield scrapy.Request(url=self._browser.current_url,
+                                     callback=self.parse,
+                                     cookies=self.cookie)
 
     # 解析账单页面
     def parse(self, response):
         if "checkSecurity" in self._browser.current_url:
+            logger.info("出现验证页面: " + self._browser.current_url)
+            # logger.info("需要验证,暂时无解决办法,跳出爬虫")
+            wait_seconds = 60
+            logger.info("等待{}秒".format(wait_seconds))
+            time.sleep(wait_seconds)
             logger.info("当前页面: " + self._browser.current_url)
-            logger.info("需要验证,暂时无解决办法,跳出爬虫")
+            # 跳转
+            yield scrapy.Request(url=self._browser.current_url,
+                                 callback=self.parse,
+                                 cookies=self.cookie)
         else:
             # 判断是否存在下一页的标签
             is_next_page = self._is_element_exist()
