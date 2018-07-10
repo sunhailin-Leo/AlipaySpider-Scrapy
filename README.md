@@ -93,6 +93,12 @@
 <h3 id="DevelopEnv">安装和运行方式</h3>
 * 安装库
 
+```python
+# ！！！最新登录方式(暂未加入命令, 切换登录需要自己的去改动代码) --- 推荐方式！！！
+python cmdline_start_spider.py
+
+```
+
 ```Python
     # 项目根目录下,打开命令行
     pip install -r requirements.txt

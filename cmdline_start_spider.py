@@ -17,9 +17,14 @@ def start_spider():
     # 设置工程路径，在cmd 命令更改路径而执行scrapy命令调试
     # 获取main文件的父目录，os.path.abspath(__file__) 为__file__文件目录
     sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+    # 提供两种方式运行
+    # 账号密码
     execute(["scrapy", "crawl", "AlipaySpider",
              "-a", "username={}".format("你的账号"),
              "-a", "password={}".format("你的密码")])
+
+    # 二维码登录
     # execute(["scrapy", "crawl", "AlipayQR"])
 
 
