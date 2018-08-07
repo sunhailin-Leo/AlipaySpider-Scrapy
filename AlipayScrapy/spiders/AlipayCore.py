@@ -248,36 +248,62 @@ class AlipaySpider(scrapy.Spider):
         # 日志输出
         logger.info("当前页面: " + self._browser.current_url)
 
-        # 隐藏金额的接口
+        # 隐藏金额的接口 (失效了 2018-08-05)
         # 账户余额: account WithDynamicFont / accountWithDynamicFont
         # 余额宝: mfund WithDynamicFont / mfundWithDynamicFontClass
         # 花呗: huabei WithDynamicFont / huabeiWithDynamicFontClass
-        ctoken = self.cookie['ctoken']
-        account_type = ["account", "mfund", "huabei"]
-        account_data = []
-        for name in account_type:
-            url_model = \
-                "https://my.alipay.com/portal/" + name + "WithDynamicFont.json" \
-                                                         "?className=" + name + "WithDynamicFontClass" \
-                                                                                "&encrypt=true" \
-                                                                                "&_input_charset=utf-8" \
-                                                                                "&ctoken=" + ctoken + "" \
-                                                                                                      "&_output_charset=utf-8"
-            session_get = requests.session()
-            requests.utils.add_dict_to_cookiejar(session_get.cookies, self.cookie)
-            html_res = session_get.get(url=url_model)
-            account_res = \
-                [re.compile(r'<[^>]+>', re.S).sub('', res) for res in html_res.json()["result"].values()]
-            account_data.append(account_res)
-        logger.debug(account_data)
+        # ctoken = self.cookie['ctoken']
+        # account_type = ["account", "mfund", "huabei"]
+        # account_data = []
+        # for name in account_type:
+        #     url_model = \
+        #         "https://my.alipay.com/portal/" + name + "WithDynamicFont.json" \
+        #                                                  "?className=" + name + "WithDynamicFontClass" \
+        #                                                                         "&encrypt=true" \
+        #                                                                         "&_input_charset=utf-8" \
+        #                                                                         "&ctoken=" + ctoken + "" \
+        #                                                                         "&_output_charset=utf-8"
+        #     session_get = requests.session()
+        #     requests.utils.add_dict_to_cookiejar(session_get.cookies, self.cookie)
+        #     html_res = session_get.get(url=url_model)
+        #     print(html_res)
+        #     account_res = \
+        #         [re.compile(r'<[^>]+>', re.S).sub('', res) for res in html_res.json()["result"].values()]
+        #     account_data.append(account_res)
+        # logger.debug(account_data)
+        # user_item = AlipayUserItem()
+        # user_item['user'] = self.username
+        # user_item['user_account'] = account_data[0][0]
+        # user_item['user_yeb_rest'] = account_data[1][0]
+        # user_item['user_rest_huabei'] = account_data[2][0]
+        # user_item['user_total_huabei'] = account_data[2][-1]
+        # user_item['create_time'] = str(int(time.mktime(datetime.datetime.now().timetuple())) * 1000)
 
-        # 花呗
+        # 点击账户余额和余额宝的显示金额按钮
+        show_account_button = self._browser.find_element_by_xpath('//*[@id="showAccountAmount"]/a[1]')
+        show_account_button.click()
+        time.sleep(random.uniform(0.3, 0.9))
+        show_yuerbao_button = self._browser.find_element_by_xpath('//*[@id="showYuebaoAmount"]/a[1]')
+        show_yuerbao_button.click()
+
+        # 隐式等待
+        self._browser.implicitly_wait(5)
+
+        # 个人页面元素选择器对象
+        # print("Response: %s" % response)
+        page_sel = scrapy.Selector(text=self._browser.page_source)
+
+        # 构造数据
         user_item = AlipayUserItem()
         user_item['user'] = self.username
-        user_item['user_account'] = account_data[0][0]
-        user_item['user_yeb_rest'] = account_data[1][0]
-        user_item['user_rest_huabei'] = account_data[2][0]
-        user_item['user_total_huabei'] = account_data[2][-1]
+        user_item['user_rest_huabei'] = \
+            page_sel.xpath('string(//*[@id="J-assets-pcredit"]/div/div/div[2]/div/p[2]/span/strong)').extract()[0]
+        # user_item['user_total_huabei'] = \
+        #     page_sel.xpath('string(//div[@class="amount-des"]/p[2]/strong)').extract()[0]
+        user_item['user_yeb_earn'] = \
+            page_sel.xpath('string(//a[@id="J-income-num"])').extract()[0]
+        user_item['user_yeb_rest'] = \
+            page_sel.xpath('string(//*[@id="J-assets-mfund-amount"]/strong)').extract()[0]
         user_item['create_time'] = str(int(time.mktime(datetime.datetime.now().timetuple())) * 1000)
         yield user_item
 

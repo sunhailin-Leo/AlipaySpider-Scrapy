@@ -25,8 +25,7 @@ class AlipayBillItem(scrapy.Item):
 
 class AlipayUserItem(scrapy.Item):
     user = scrapy.Field()
-    user_account = scrapy.Field()
+    user_yeb_earn = scrapy.Field()
     user_yeb_rest = scrapy.Field()
     user_rest_huabei = scrapy.Field()
-    user_total_huabei = scrapy.Field()
     create_time = scrapy.Field()
