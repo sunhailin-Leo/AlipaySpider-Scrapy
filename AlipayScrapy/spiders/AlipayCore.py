@@ -5,7 +5,6 @@ Created on 2017年11月1日
 """
 
 # 系统库
-import re
 import datetime
 import logging
 import requests
@@ -13,9 +12,12 @@ from random import choice
 
 # 第三方库
 import scrapy
+# import win32api
+# import win32con
 import win_unicode_console
 from selenium import webdriver
 from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.common.action_chains import ActionChains
 
 # 项目内部库
 from AlipayScrapy.items import AlipayBillItem
@@ -28,11 +30,10 @@ win_unicode_console.enable()
 
 # USERAGENT-LIST
 ua_list = [
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/48.0.2564.82 "
-    "Chrome/48.0.2564.82 Safari/537.36",
     "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36",
     "Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.93 Safari/537.36",
-    "Mozilla/5.0 (X11; OpenBSD i386) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 "
+    "Safari/537.36 "
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/32.0.1664.3 "
     "Safari/537.36"
 ]
@@ -100,6 +101,7 @@ class AlipaySpider(scrapy.Spider):
         options = webdriver.ChromeOptions()
         options.add_argument('disable-infobars')
         options.add_argument('--user-agent=%s' % choice(ua_list))
+        options.add_experimental_option('prefs', {'download.default_directory': '.\\static\\temp_file\\'})
         self._browser = webdriver.Chrome(executable_path="./AlipayScrapy/conf/chromedriver2-35.exe",
                                          chrome_options=options)
 
@@ -279,15 +281,19 @@ class AlipaySpider(scrapy.Spider):
         # user_item['user_total_huabei'] = account_data[2][-1]
         # user_item['create_time'] = str(int(time.mktime(datetime.datetime.now().timetuple())) * 1000)
 
-        # 点击账户余额和余额宝的显示金额按钮
+        # 点击账户余额、余额宝、花呗的显示金额按钮
         show_account_button = self._browser.find_element_by_xpath('//*[@id="showAccountAmount"]/a[1]')
         show_account_button.click()
         time.sleep(random.uniform(0.3, 0.9))
         show_yuerbao_button = self._browser.find_element_by_xpath('//*[@id="showYuebaoAmount"]/a[1]')
         show_yuerbao_button.click()
+        time.sleep(random.uniform(0.3, 0.9))
+        show_huabei_button = self._browser.find_element_by_xpath('//*[@id="showHuabeiAmount"]/a[1]')
+        show_huabei_button.click()
 
         # 隐式等待
-        self._browser.implicitly_wait(5)
+        # self._browser.implicitly_wait(2)
+        time.sleep(2)
 
         # 个人页面元素选择器对象
         # print("Response: %s" % response)
@@ -297,21 +303,37 @@ class AlipaySpider(scrapy.Spider):
         user_item = AlipayUserItem()
         user_item['user'] = self.username
         user_item['user_rest_huabei'] = \
-            page_sel.xpath('string(//*[@id="J-assets-pcredit"]/div/div/div[2]/div/p[2]/span/strong)').extract()[0]
-        # user_item['user_total_huabei'] = \
-        #     page_sel.xpath('string(//div[@class="amount-des"]/p[2]/strong)').extract()[0]
+            page_sel.xpath('string(//*[@id="available-amount-container"]/span)').extract_first()
+        user_item['user_total_huabei'] = \
+            page_sel.xpath('string(//*[@id="credit-amount-container"]/span)').extract_first()
         user_item['user_yeb_earn'] = \
-            page_sel.xpath('string(//a[@id="J-income-num"])').extract()[0]
+            page_sel.xpath('string(//a[@id="J-income-num"])').extract_first()
         user_item['user_yeb_rest'] = \
-            page_sel.xpath('string(//*[@id="J-assets-mfund-amount"]/strong)').extract()[0]
+            page_sel.xpath('string(//*[@id="J-assets-mfund-amount"]/span)').extract_first()
         user_item['create_time'] = str(int(time.mktime(datetime.datetime.now().timetuple())) * 1000)
         yield user_item
 
         # 智能等待 --- 1
         time.sleep(random.uniform(1, 2))
 
+        # 点击
+        # mouse_mov_and_click(pos_x=1500, pos_y=150)
+
         # 获取完后跳转到账单页面
+        # try:
+        #     order_detail_tag = \
+        #         self._browser.find_element_by_xpath('//ul[@class="global-nav"]/li[@class="global-nav-item "]/a')
+        #     ActionChains(self._browser).move_to_element(order_detail_tag).perform()
+        #     time.sleep(random.uniform(0.5, 0.9))
+        #     # ActionChains(self._browser).click(order_detail_tag)
+        #     order_detail_tag.click()
+        # except Exception as e:
+        #     logger.error("鼠标移动失败, 失败原因: {}".format(str(e)))
+
+        # 点击交易记录选项卡
         self._browser.find_element_by_xpath('//ul[@class="global-nav"]/li[@class="global-nav-item "]/a').click()
+        # self._browser.find_element_by_xpath('//*[@id="globalContainer"]/div[2]/div/div[1]/div/ul/li[2]/a').click()
+        # self._browser.get("https://consumeprod.alipay.com/record/index.htm")
 
         # 判断点击后的页面
         if "checkSecurity" in self._browser.current_url:
@@ -323,7 +345,7 @@ class AlipaySpider(scrapy.Spider):
             if is_change_page:
                 try:
                     # 下拉框a标签点击事件触发
-                    self._browser.find_element_by_xpath('//div[@id="J-datetime-select"]/a[1]').click()
+                    self._browser.find_element_by_xpath('//*[@id="J-select-range"]/a[1]').click()
 
                     # 选择下拉框的选项
                     self._browser.find_element_by_xpath(
@@ -380,12 +402,73 @@ class AlipaySpider(scrapy.Spider):
                 except Exception as err:
                     logger.error(err)
                     logger.debug(self._browser.current_url)
-                    self._browser.close()
+                    # self._browser.close()
             else:
                 # 跳转
                 yield scrapy.Request(url=self._browser.current_url,
                                      callback=self.parse,
                                      cookies=self.cookie)
+        else:
+            try:
+                # 下拉框a标签点击事件触发
+                self._browser.find_element_by_xpath('//*[@id="J-datetime-select"]/a[1]').click()
+
+                # 选择下拉框的选项
+                self._browser.find_element_by_xpath(
+                    '//ul[@class="ui-select-content"]/li[@data-value="threeMonths"]'). \
+                    click()
+
+                '''
+                self._browser.find_element_by_xpath('//ul[@class="ui-select-content"]/li[@data-value="customDate"]').click()
+
+                # 起始日期和最终日期的初始化
+                begin_date_tag = "beginDate"
+                end_date_tag = "endDate"
+
+                # 设置起始日期
+                remove_start_time_read_only = "document.getElementById('" + begin_date_tag + "')." \
+                                                                                             "removeAttribute('readonly')"
+                self._browser.execute_script(remove_start_time_read_only)
+                ele_begin = self._browser.find_element_by_id(begin_date_tag)
+                ele_begin.clear()
+                self._slow_input(ele_begin, self.begin_date)
+
+                # 智能等待 --- 1
+                time.sleep(random.uniform(1, 2))
+
+                # 设置结束日期
+                remove_end_time_read_only = "document.getElementById('" + end_date_tag + "').removeAttribute('readonly')"
+                self._browser.execute_script(remove_end_time_read_only)
+                ele_end = self._browser.find_element_by_id(end_date_tag)
+                ele_end.clear()
+                self._slow_input(ele_end, self.end_date)
+                '''
+
+                # 智能等待 --- 2
+                time.sleep(random.uniform(0.5, 0.9))
+
+                # 选择交易分类
+                self._browser.find_element_by_xpath('//div[@id="J-category-select"]/a[1]').click()
+
+                # 选择交易分类项
+                self._bill_option_control()
+
+                # 智能等待 --- 3
+                time.sleep(random.uniform(1, 2))
+
+                # 按钮(交易记录点击搜索)
+                self._browser.find_element_by_id("J-set-query-form").click()
+                logger.info("跳转到自定义时间页面....")
+                logger.info(self._browser.current_url)
+
+                # 跳转
+                yield scrapy.Request(url=self._browser.current_url,
+                                     callback=self.parse,
+                                     cookies=self.cookie)
+            except Exception as err:
+                logger.error(err)
+                logger.debug(self._browser.current_url)
+                # self._browser.close()
 
     # 解析账单页面
     def parse(self, response):
@@ -403,6 +486,15 @@ class AlipaySpider(scrapy.Spider):
                                  callback=self.parse,
                                  cookies=self.cookie)
         else:
+            # 尝试使用导出的方式进行账单获取
+            # self._browser.find_element_by_class_name(name="J-download-tip mr-10").click()
+            # download_url = self._browser.find_element_by_xpath('//*[@id="main"]/div[2]/div/div[2]/div[1]/div/a[1]')\
+            #     .get_attribute('data-link')
+            # self._browser.get(download_url)
+            # 等待10秒
+            # time.sleep(15)
+            # self._browser.find_element_by_xpath('//*id[@class="download-submit"]/span/input').click()
+
             # 判断是否存在下一页的标签
             is_next_page = self._is_element_exist()
             logger.info("是否存在下一页: " + str(is_next_page))
@@ -487,20 +579,21 @@ class AlipaySpider(scrapy.Spider):
                     time.sleep(random.uniform(0.3, 0.6))
 
                     # 抓取完当页的数据后,滚动事件到底部，点击下一页
-                    js_code = """
-                        var t = document.documentElement.scrollTop || document.body.scrollTop;
-                        var bodyHeight = document.body.clientHeight;
-                        console.log(bodyHeight);
-                        var scrollTop = 0;
-                        var time = setInterval(function () {
-                            scrollTop += 66;
-                            document.documentElement.scrollTop = scrollTop;
-                            if(scrollTop >= bodyHeight){
-                                clearInterval(time);
-                            }
-                        },10);
-                    """
-                    self._browser.execute_script(js_code)
+                    # js_code = """
+                    #     var t = document.documentElement.scrollTop || document.body.scrollTop;
+                    #     var bodyHeight = document.body.clientHeight;
+                    #     console.log(bodyHeight);
+                    #     var scrollTop = 0;
+                    #     var time = setInterval(function () {
+                    #         scrollTop += 66;
+                    #         document.documentElement.scrollTop = scrollTop;
+                    #         if(scrollTop >= bodyHeight){
+                    #             clearInterval(time);
+                    #         }
+                    #     },10);
+                    # """
+                    # self._browser.execute_script(js_code)
+                    self._browser.execute_script('window.scrollTo(0,1000000)')
 
                     # 智能等待 --- 4
                     time.sleep(random.uniform(0.5, 0.9))
@@ -517,5 +610,6 @@ class AlipaySpider(scrapy.Spider):
                     self._browser.close()
                     return
             except Exception as err:
-                logger.debug(err.with_traceback(err))
+                # logger.debug(err.with_traceback(err))
+                logger.error(err)
                 logger.error('抓取出错,页面数据获取失败')

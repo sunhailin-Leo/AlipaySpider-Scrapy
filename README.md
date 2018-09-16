@@ -8,7 +8,7 @@
 * Author: Leo
 * Wechat: Leo-sunhailin 
 * E-mail: 379978424@qq.com 
-* Github URL: [项目链接]()
+* Github URL: [项目链接](https://github.com/sunhailin-Leo/AlipaySpider-Scrapy)
 
 ---
 
@@ -24,6 +24,13 @@
 ---
 
 <h3 id="Now">目前的进度</h3>
+
+* 2018年9月16日:
+    * 更新了一下用户主页的数据获取(账户 余额、余额宝详情、花呗详情)
+    * 账单详情依旧无法完整获取(账单下载也有点击流识别)
+        * 尝试使用了pywin32和pymouse系列的方式去点击(暂时没有什么进展), 打算用C写个dll真实模拟鼠标移动(待更新)
+    * conf文件夹中放了一个pywin32-221 python3.4的安装包(windows的, 感兴趣的小伙伴可以尝试一下)
+
 
 * 2018年8月8日:
     * 支付宝又双叒叕改了个人主页的样式和数据获取方式
@@ -78,18 +85,19 @@
 * Python版本：3.4.4
     
     * Python库版本列表:
+        * win_unicode_console: 0.5
      
         * Pillow: 5.0.0
     
-        * Scrapy：1.4.0
+        * Scrapy：1.5.0
         
-        * selenium：3.8.1
+        * selenium：3.13.0
         
         * requests：2.18.4
         
-        * pymongo：3.6.0
+        * pymongo：3.6.1
         
-        * python_dateutil：2.6.1
+        * python_dateutil：2.7.0
 
 * Ps: 一定要配好Python的环境,不然Scrapy的命令可能会跑不起来
 * 
@@ -106,10 +114,14 @@ python cmdline_start_spider.py
 
 ```Python
     # 项目根目录下,打开命令行
+    windows下:
     pip install -r requirements.txt
+    
+    Linux 下:
+    pip3 install -r requirements.txt (py2没有测试过, 感兴趣的可以测试一下)
 ```
 
-* 启动
+* 启动(可以忽略不看)
 
 ```Python
     # 项目根目录下,启动爬虫
@@ -185,7 +197,11 @@ lxml中有一个"string(.)"方法也是为了提取文字,但是这个方法是�
 
 <h3 id="Future">未来的进度</h3>
 
-0. 解决账单获取的问题,目前基本都被二维码页面挡住了(需要研究一段时间)
+1. 解决账单获取的问题,目前基本都被二维码页面挡住了(需要研究一段时间, 暂时没有办法解决)
+
+---
+
+<h3 id="Hole">已经搁置的进度</h3>
 
 * 下面的搁置着先:
     1. 数据源保存的可选择性(从多源选择单源写入到多源写入)
