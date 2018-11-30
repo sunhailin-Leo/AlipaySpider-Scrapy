@@ -150,6 +150,9 @@ class AlipaySpider(scrapy.Spider):
         # 浏览器初始化配置
         self._load_chrome()
         # self._browser.maximize_window()
+        # 使用了DDx64的动态库之后需要屏幕的绝对坐标, 因此需要对浏览器启动的位置进行设置
+        self._browser.set_window_position(x=-7, y=0)
+        self._browser.set_window_size(width=1920, height=1080)
         self._browser.get(self._login_url)
         # self._browser.implicitly_wait(3)
 
@@ -172,6 +175,7 @@ class AlipaySpider(scrapy.Spider):
         # 登录按钮
         time.sleep(random.uniform(0.3, 0.5))
         self._browser.find_element_by_id('J-login-btn').click()
+        # mouse_mov_and_click(x=1200, y=450)
 
         # 输出当前链接
         logger.info("当前页面链接: " + self._browser.current_url)
@@ -250,46 +254,22 @@ class AlipaySpider(scrapy.Spider):
         # 日志输出
         logger.info("当前页面: " + self._browser.current_url)
 
-        # 隐藏金额的接口 (失效了 2018-08-05)
-        # 账户余额: account WithDynamicFont / accountWithDynamicFont
-        # 余额宝: mfund WithDynamicFont / mfundWithDynamicFontClass
-        # 花呗: huabei WithDynamicFont / huabeiWithDynamicFontClass
-        # ctoken = self.cookie['ctoken']
-        # account_type = ["account", "mfund", "huabei"]
-        # account_data = []
-        # for name in account_type:
-        #     url_model = \
-        #         "https://my.alipay.com/portal/" + name + "WithDynamicFont.json" \
-        #                                                  "?className=" + name + "WithDynamicFontClass" \
-        #                                                                         "&encrypt=true" \
-        #                                                                         "&_input_charset=utf-8" \
-        #                                                                         "&ctoken=" + ctoken + "" \
-        #                                                                         "&_output_charset=utf-8"
-        #     session_get = requests.session()
-        #     requests.utils.add_dict_to_cookiejar(session_get.cookies, self.cookie)
-        #     html_res = session_get.get(url=url_model)
-        #     print(html_res)
-        #     account_res = \
-        #         [re.compile(r'<[^>]+>', re.S).sub('', res) for res in html_res.json()["result"].values()]
-        #     account_data.append(account_res)
-        # logger.debug(account_data)
-        # user_item = AlipayUserItem()
-        # user_item['user'] = self.username
-        # user_item['user_account'] = account_data[0][0]
-        # user_item['user_yeb_rest'] = account_data[1][0]
-        # user_item['user_rest_huabei'] = account_data[2][0]
-        # user_item['user_total_huabei'] = account_data[2][-1]
-        # user_item['create_time'] = str(int(time.mktime(datetime.datetime.now().timetuple())) * 1000)
+        # 点击账户余额、余额宝、花呗的显示金额按钮(JS注入的方式)
+        # show_account_button = self._browser.find_element_by_xpath('//*[@id="showAccountAmount"]/a[1]')
+        # show_account_button.click()
+        # time.sleep(random.uniform(0.3, 0.9))
+        # show_yuerbao_button = self._browser.find_element_by_xpath('//*[@id="showYuebaoAmount"]/a[1]')
+        # show_yuerbao_button.click()
+        # time.sleep(random.uniform(0.3, 0.9))
+        # show_huabei_button = self._browser.find_element_by_xpath('//*[@id="showHuabeiAmount"]/a[1]')
+        # show_huabei_button.click()
 
-        # 点击账户余额、余额宝、花呗的显示金额按钮
-        show_account_button = self._browser.find_element_by_xpath('//*[@id="showAccountAmount"]/a[1]')
-        show_account_button.click()
-        time.sleep(random.uniform(0.3, 0.9))
-        show_yuerbao_button = self._browser.find_element_by_xpath('//*[@id="showYuebaoAmount"]/a[1]')
-        show_yuerbao_button.click()
-        time.sleep(random.uniform(0.3, 0.9))
-        show_huabei_button = self._browser.find_element_by_xpath('//*[@id="showHuabeiAmount"]/a[1]')
-        show_huabei_button.click()
+        # 点击账户余额、余额宝、花呗的显示金额按钮(DDx64.dll的方式)
+        mouse_mov_and_click(x=580, y=380)
+        time.sleep(random.uniform(1, 2))
+        mouse_mov_and_click(x=1120, y=380)
+        time.sleep(random.uniform(1, 2))
+        mouse_mov_and_click(x=570, y=510)
 
         # 隐式等待
         # self._browser.implicitly_wait(2)
@@ -314,26 +294,11 @@ class AlipaySpider(scrapy.Spider):
         yield user_item
 
         # 智能等待 --- 1
-        time.sleep(random.uniform(1, 2))
-
-        # 点击
-        # mouse_mov_and_click(pos_x=1500, pos_y=150)
-
-        # 获取完后跳转到账单页面
-        # try:
-        #     order_detail_tag = \
-        #         self._browser.find_element_by_xpath('//ul[@class="global-nav"]/li[@class="global-nav-item "]/a')
-        #     ActionChains(self._browser).move_to_element(order_detail_tag).perform()
-        #     time.sleep(random.uniform(0.5, 0.9))
-        #     # ActionChains(self._browser).click(order_detail_tag)
-        #     order_detail_tag.click()
-        # except Exception as e:
-        #     logger.error("鼠标移动失败, 失败原因: {}".format(str(e)))
+        time.sleep(random.uniform(2, 3))
 
         # 点击交易记录选项卡
-        self._browser.find_element_by_xpath('//ul[@class="global-nav"]/li[@class="global-nav-item "]/a').click()
-        # self._browser.find_element_by_xpath('//*[@id="globalContainer"]/div[2]/div/div[1]/div/ul/li[2]/a').click()
-        # self._browser.get("https://consumeprod.alipay.com/record/index.htm")
+        # self._browser.find_element_by_xpath('//ul[@class="global-nav"]/li[@class="global-nav-item "]/a').click()
+        mouse_mov_and_click(x=1180, y=160)
 
         # 判断点击后的页面
         if "checkSecurity" in self._browser.current_url:
@@ -472,6 +437,7 @@ class AlipaySpider(scrapy.Spider):
 
     # 解析账单页面
     def parse(self, response):
+        time.sleep(1000)
         if "checkSecurity" in self._browser.current_url:
             logger.info("出现验证页面: " + self._browser.current_url)
 
