@@ -20,12 +20,17 @@ def start_spider():
 
     # 提供两种方式运行
     # 账号密码
-    execute(["scrapy", "crawl", "AlipaySpider",
-             "-a", "username={}".format("你的账号"),
-             "-a", "password={}".format("你的密码")])
+    # execute(["scrapy", "crawl", "AlipaySpider",
+    #          "-a", "username={}".format("你的账号"),
+    #          "-a", "password={}".format("你的密码")])
 
     # 二维码登录
     # execute(["scrapy", "crawl", "AlipayQR"])
+
+    # V2版本的启动方式
+    execute(["scrapy", "crawl", "AlipayCore",
+             "-a", "username={}".format("你的账号"),
+             "-a", "password={}".format("你的密码")])
 
 
 if __name__ == '__main__':

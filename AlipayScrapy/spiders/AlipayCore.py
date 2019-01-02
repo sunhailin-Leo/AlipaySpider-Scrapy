@@ -17,7 +17,6 @@ import scrapy
 import win_unicode_console
 from selenium import webdriver
 from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.common.action_chains import ActionChains
 
 # 项目内部库
 from AlipayScrapy.items import AlipayBillItem
